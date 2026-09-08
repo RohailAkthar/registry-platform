@@ -1,6 +1,15 @@
 #!/usr/bin/env python3
 
 # ruff: noqa: I001, E402
+# --- Option C: select the domain-model extension module ---
+import os as _os, sys as _sys, importlib as _il  # noqa: E402
+_ext = _os.environ.get("REGISTRY_EXTENSION_MODULE", "openg2p_registry_nsr_extension")
+if _ext != "openg2p_registry_extensions":
+    _nsr_mod = _il.import_module(_ext)
+    _ext_mod = _il.import_module("openg2p_registry_extensions")
+    _ext_mod.__path__ = _nsr_mod.__path__
+    _sys.modules["openg2p_registry_extensions"] = _nsr_mod
+
 from openg2p_registry_staff_portal_api.config import Settings
 Settings.get_config()
 

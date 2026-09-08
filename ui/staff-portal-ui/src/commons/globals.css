@@ -15,6 +15,62 @@
     button {
         cursor: pointer;
     }
+
+    /* Clean, beautiful table styling in Intake Form */
+    table {
+        border-collapse: separate !important;
+        border-spacing: 0 !important;
+        width: 100% !important;
+    }
+
+    table thead th {
+        background-color: #F1F5F9 !important;
+        color: #334155 !important;
+        font-weight: 700 !important;
+        font-size: 11px !important;
+        letter-spacing: 0.05em !important;
+        text-transform: uppercase !important;
+        border-bottom: 2px solid #CBD5E1 !important;
+        padding: 10px 14px !important;
+    }
+
+    table tbody tr {
+        transition: background-color 0.15s ease !important;
+    }
+
+    table tbody tr:hover {
+        background-color: #F8FAFC !important;
+    }
+
+    table tbody td {
+        border-bottom: 1px solid #E2E8F0 !important;
+        padding: 10px 14px !important;
+        font-size: 13px !important;
+        color: #1E293B !important;
+    }
+
+    /* Spacious and readable table inputs in Intake Form edit mode */
+    table input, table select {
+        min-width: 120px !important;
+        padding: 6px 10px !important;
+        font-size: 13px !important;
+        border-radius: 6px !important;
+        border: 1px solid #CBD5E1 !important;
+        box-shadow: 0 1px 2px 0 rgba(0, 0, 0, 0.05) !important;
+    }
+
+    table input:focus, table select:focus {
+        outline: none !important;
+        border-color: #3B82F6 !important;
+        box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.2) !important;
+    }
+
+    /* Clean horizontal scrolling for multi-column data tables */
+    .intake-form-accordion-content div:has(> table),
+    .intake-form-accordion-content div[class*="overflow"] {
+        overflow-x: auto !important;
+        max-width: 100% !important;
+    }
 }
 
 @layer utilities {
@@ -112,4 +168,288 @@
         background: transparent;
         border-radius: 15px;
     }
+}
+
+/* ==========================================================================
+   GramStack Premium Intake Form Theme Overrides
+   Replaces default mustard-yellow and dashed-orange styling with sleek,
+   state-of-the-art modern aesthetics.
+   ========================================================================== */
+
+/* 1. Accordion Item Wrapper (Collapsed & Expanded) */
+.intake-form-accordion-item {
+    border-radius: 16px !important;
+    margin-bottom: 16px !important;
+    transition: all 0.25s cubic-bezier(0.4, 0, 0.2, 1) !important;
+    box-shadow: 0 2px 4px 0 rgba(0, 0, 0, 0.04) !important;
+}
+
+/* Collapsed State: Clean, modern white card with subtle slate border */
+.intake-form-accordion-item:not([data-intake-form-expanded="true"]) {
+    background-color: #FFFFFF !important;
+    border: 1.5px solid #E2E8F0 !important;
+}
+
+.intake-form-accordion-item:not([data-intake-form-expanded="true"]):hover {
+    border-color: #93C5FD !important;
+    box-shadow: 0 4px 12px -2px rgba(59, 130, 246, 0.12) !important;
+    transform: translateY(-1px);
+}
+
+/* Expanded State: Premium white background, subtle royal blue border & glow (NO MORE MUSTARD YELLOW / DASHED BORDER!) */
+.intake-form-accordion-item[data-intake-form-expanded="true"] {
+    background-color: #FFFFFF !important;
+    border: 2px solid #2563EB !important;
+    box-shadow: 0 12px 28px -4px rgba(37, 99, 235, 0.15), 0 8px 10px -6px rgba(37, 99, 235, 0.1) !important;
+}
+
+/* 2. Accordion Header Button */
+.intake-form-accordion-header {
+    padding: 18px 24px !important;
+    margin-top: 0 !important;
+    margin-bottom: 0 !important;
+    border-radius: 14px !important;
+    transition: background-color 0.2s ease !important;
+}
+
+.intake-form-accordion-header:hover {
+    background-color: #F8FAFC !important;
+}
+
+/* Title text inside header */
+.intake-form-accordion-header h2 {
+    font-family: inherit !important;
+    font-size: 17px !important;
+    font-weight: 700 !important;
+    letter-spacing: -0.01em !important;
+    color: #0F172A !important; /* Elegant slate-900 instead of harsh orange */
+}
+
+/* 3. Section Status Badges */
+.intake-form-accordion-header span[style*="background-color"] {
+    font-size: 11px !important;
+    font-weight: 700 !important;
+    text-transform: uppercase !important;
+    letter-spacing: 0.05em !important;
+    padding: 3px 10px !important;
+    border-radius: 9999px !important;
+    display: inline-flex !important;
+    align-items: center !important;
+    gap: 4px !important;
+}
+
+/* Saved badge - Emerald gradient */
+.intake-form-accordion-header span[style*="#D1FAE5"],
+.intake-form-accordion-header span[style*="#047857"] {
+    background: #ECFDF5 !important;
+    color: #059669 !important;
+    border: 1px solid #A7F3D0 !important;
+    box-shadow: 0 1px 2px 0 rgba(16, 185, 129, 0.1) !important;
+}
+
+/* 4. Accordion Content & Form Controls */
+.intake-form-accordion-content {
+    padding: 16px 24px 24px 24px !important;
+    border-top: 1px solid #F1F5F9 !important;
+}
+
+/* Side-by-side: Compact label on the left and input/value directly next to it without blowing up column grids */
+.intake-form-accordion-content .flex.flex-col.sm\:flex-row,
+.intake-form-accordion-content .sm\:flex-row {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: baseline !important;
+    gap: 10px !important;
+    margin-bottom: 12px !important;
+    width: 100% !important;
+}
+
+/* Edit Mode: Form Labels - full visibility and no truncation */
+body .intake-form-accordion-content label,
+body .intake-form-accordion-content [class*="WidgetFieldLabel"],
+body .sections-container label,
+body .sections-container [class*="WidgetFieldLabel"],
+body .section label {
+    width: auto !important;
+    min-width: fit-content !important;
+    max-width: none !important;
+    font-size: 13px !important;
+    font-weight: 600 !important;
+    color: #334155 !important;
+    margin-bottom: 0 !important;
+    padding: 0 !important;
+    flex-shrink: 0 !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+    line-height: 1.3 !important;
+}
+
+/* Edit Mode: Remove truncation on inner spans */
+body .intake-form-accordion-content label span,
+body .intake-form-accordion-content label span.truncate,
+body .sections-container label span,
+body .sections-container label span.truncate,
+body .section label span.truncate {
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+    max-width: none !important;
+}
+
+/* Readonly Submission View: Display Widgets - complete label visibility without ellipsis */
+body .sections-container .section .text-gray-600,
+body .sections-container [class*="section"] .text-gray-600,
+body .sections-container label.text-gray-700,
+body .intake-form-accordion-content .text-gray-600,
+body .intake-form-accordion-content label.text-gray-700,
+body [class*="DisplayWidget"] > .text-gray-600,
+body [class*="DisplayWidget"] > div:first-child,
+body .panel .text-gray-600,
+body .panel label.text-gray-700 {
+    width: auto !important;
+    min-width: fit-content !important;
+    max-width: none !important;
+    flex-shrink: 0 !important;
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+    word-break: normal !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #475569 !important;
+    line-height: 1.3 !important;
+    padding-right: 8px !important;
+}
+
+/* Readonly Submission View: Row container alignment */
+body .intake-form-accordion-content [class*="DisplayWidget"],
+body .sections-container [class*="DisplayWidget"],
+body .section [class*="DisplayWidget"] {
+    display: flex !important;
+    flex-direction: row !important;
+    align-items: baseline !important;
+    gap: 8px !important;
+    margin-bottom: 10px !important;
+    width: 100% !important;
+}
+
+/* Readonly Submission View: Value container and typography */
+body .intake-form-accordion-content [class*="DisplayWidget"] > .flex-1,
+body .sections-container [class*="DisplayWidget"] > .flex-1,
+body .section [class*="DisplayWidget"] > .flex-1,
+.intake-form-accordion-content .flex-1.min-w-0 {
+    flex: 1 1 auto !important;
+    min-width: 0 !important;
+    overflow-wrap: break-word !important;
+    word-break: break-word !important;
+}
+
+body .intake-form-accordion-content [class*="DisplayWidget"] > .flex-1 > div,
+body .intake-form-accordion-content [class*="DisplayWidget"] > .flex-1 > span,
+body .sections-container [class*="DisplayWidget"] > .flex-1 > div,
+body .sections-container [class*="DisplayWidget"] > .flex-1 > span,
+body .section [class*="DisplayWidget"] > .flex-1 > div,
+body .section [class*="DisplayWidget"] > .flex-1 > span {
+    overflow: visible !important;
+    text-overflow: clip !important;
+    white-space: normal !important;
+    word-break: break-word !important;
+    font-size: 14px !important;
+    font-weight: 600 !important;
+    color: #0F172A !important;
+}
+
+/* Eliminate yellow divider lines and empty vertical separator borders */
+.intake-form-accordion-content hr {
+    background-color: #E2E8F0 !important;
+    height: 1px !important;
+    border: none !important;
+    margin: 20px 0 12px 0 !important;
+}
+
+/* Hide the 1px vertical panel divider line */
+.intake-form-accordion-content div[style*="width: 1px"],
+.intake-form-accordion-content div[style*="bottom: 5px"] {
+    display: none !important;
+}
+
+.intake-form-accordion-content [style*="border-right"],
+.intake-form-accordion-content [style*="border-left"] {
+    border-right: none !important;
+    border-left: none !important;
+}
+
+/* Panels inside expanded section */
+.intake-form-accordion-content .section-panels {
+    padding-top: 12px !important;
+}
+
+/* Form inputs & dropdowns inside panels - fluid width that respects columns */
+.intake-form-accordion-content input:not([type="checkbox"]):not([type="radio"]),
+.intake-form-accordion-content select,
+.intake-form-accordion-content textarea {
+    border: 1.5px solid #CBD5E1 !important;
+    border-radius: 8px !important;
+    padding: 6px 10px !important;
+    height: 38px !important;
+    line-height: 22px !important;
+    font-size: 13px !important;
+    font-weight: 500 !important;
+    color: #0F172A !important;
+    background-color: #FFFFFF !important;
+    box-sizing: border-box !important;
+    width: 100% !important;
+    min-width: 0 !important;
+    max-width: 100% !important;
+    transition: border-color 0.15s ease, box-shadow 0.15s ease !important;
+}
+
+.intake-form-accordion-content select {
+    padding-right: 32px !important;
+    cursor: pointer !important;
+}
+
+.intake-form-accordion-content input:focus,
+.intake-form-accordion-content select:focus,
+.intake-form-accordion-content textarea:focus {
+    border-color: #2563EB !important;
+    box-shadow: 0 0 0 3px rgba(37, 99, 235, 0.15) !important;
+    outline: none !important;
+}
+
+/* 5. Navigation Buttons (Next / Previous / Save) */
+.intake-form-accordion-content .intake-form-save-btn,
+.intake-form-accordion-content .intake-form-next-btn {
+    background: linear-gradient(135deg, #1E3A8A 0%, #2563EB 100%) !important;
+    color: #FFFFFF !important;
+    font-weight: 700 !important;
+    font-size: 13px !important;
+    padding: 9px 24px !important;
+    border-radius: 10px !important;
+    border: none !important;
+    box-shadow: 0 4px 10px -2px rgba(37, 99, 235, 0.35) !important;
+    transition: all 0.2s ease !important;
+}
+
+.intake-form-accordion-content .intake-form-save-btn:hover,
+.intake-form-accordion-content .intake-form-next-btn:hover {
+    filter: brightness(1.1) !important;
+    transform: translateY(-1px) !important;
+}
+
+.intake-form-accordion-content .intake-form-prev-btn {
+    background: #FFFFFF !important;
+    color: #475569 !important;
+    font-weight: 600 !important;
+    font-size: 13px !important;
+    padding: 8px 20px !important;
+    border-radius: 10px !important;
+    border: 1.5px solid #CBD5E1 !important;
+    transition: all 0.2s ease !important;
+}
+
+.intake-form-accordion-content .intake-form-prev-btn:hover {
+    background: #F8FAFC !important;
+    border-color: #94A3B8 !important;
 }

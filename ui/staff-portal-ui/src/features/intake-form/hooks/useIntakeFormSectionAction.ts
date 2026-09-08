@@ -141,10 +141,11 @@ export const useIntakeFormSectionAction = ({
         const existingDocuments = (change?.files || []).filter(file => file && typeof file === 'object' && ('document_store_id' in file));
         documentsResponse = [...existingDocuments as UploadedDocument[], ...documentsResponse];
 
+        const rawRecords = change?.records ?? (change as any)?.pds_records ?? (change && typeof change === 'object' ? Object.values(change).find(v => Array.isArray(v)) : undefined);
         const savePayload = {
             submission_id: activeSubmissionId || submissionId,
             section_id: activeSection.section_id,
-            section_payload: intakeNormalisedRecords(change?.records, sectionInternalIds[activeSection.section_register_id]),
+            section_payload: intakeNormalisedRecords(rawRecords as any[], sectionInternalIds[activeSection.section_register_id]),
             section_register_id: activeSection.section_register_id,
             form_id: formId,
             register_id: registerId,

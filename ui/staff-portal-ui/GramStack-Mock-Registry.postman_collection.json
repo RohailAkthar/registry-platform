@@ -1,0 +1,593 @@
+{
+  "info": {
+    "_postman_id": "b35ac462-3210-45a8-94ff-2bc36be02582",
+    "name": "GramStack Mock Registry - Search API",
+    "description": "Search API examples (POST /api/v1/{Entity}/search) for all six GramStack mock registries running on Sunbird RC. One folder per registry, each with 2-3 example requests using real sample values from sunbirdrc2.0/data/*.json. Set the `base_url` collection variable (default http://localhost:8086) to point at your registry.\n\nSee sunbirdrc2.0/README.md and lookup.py for the equivalent Python helpers.",
+    "schema": "https://schema.getpostman.com/json/collection/v2.1.0/collection.json"
+  },
+  "variable": [
+    {
+      "key": "base_url",
+      "value": "https://gramstack-mock-registry.credissuer.com",
+      "type": "string"
+    }
+  ],
+  "item": [
+    {
+      "name": "SHGLokOS",
+      "item": [
+        {
+          "name": "Search by member_id",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filters\": {\n    \"member_id\": {\n      \"eq\": \"BR-PAT-SHG-000001-06\"\n    }\n  },\n  \"limit\": 5,\n  \"offset\": 0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/SHGLokOS/search",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "SHGLokOS",
+                "search"
+              ]
+            },
+            "description": "Fetch a single SHG-LokOS member record by its unique member_id."
+          },
+          "response": []
+        },
+        {
+          "name": "Search by aadhaar_number",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filters\": {\n    \"aadhaar_number\": {\n      \"eq\": \"828105115767\"\n    }\n  },\n  \"limit\": 5,\n  \"offset\": 0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/SHGLokOS/search",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "SHGLokOS",
+                "search"
+              ]
+            },
+            "description": "Fetch a member by their Aadhaar number."
+          },
+          "response": []
+        },
+        {
+          "name": "List members in a district",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filters\": {\n    \"district\": {\n      \"eq\": \"Nalanda\"\n    }\n  },\n  \"limit\": 5,\n  \"offset\": 0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/SHGLokOS/search",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "SHGLokOS",
+                "search"
+              ]
+            },
+            "description": "Filter on a non-key field (district) to list multiple matching members."
+          },
+          "response": []
+        }
+      ],
+      "description": "Search API examples for the SHGLokOS registry."
+    },
+    {
+      "name": "FarmerAgriStack",
+      "item": [
+        {
+          "name": "Search by farmer_id",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filters\": {\n    \"farmer_id\": {\n      \"eq\": \"BR7759379472779\"\n    }\n  },\n  \"limit\": 5,\n  \"offset\": 0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/FarmerAgriStack/search",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FarmerAgriStack",
+                "search"
+              ]
+            },
+            "description": "Fetch a single farmer record by its AgriStack farmer_id."
+          },
+          "response": []
+        },
+        {
+          "name": "Search by aadhaar_number",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filters\": {\n    \"aadhaar_number\": {\n      \"eq\": \"434655547205\"\n    }\n  },\n  \"limit\": 5,\n  \"offset\": 0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/FarmerAgriStack/search",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FarmerAgriStack",
+                "search"
+              ]
+            },
+            "description": "Fetch a farmer by their Aadhaar number."
+          },
+          "response": []
+        },
+        {
+          "name": "List farmers growing Paddy",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filters\": {\n    \"crop_type\": {\n      \"contains\": \"Paddy\"\n    }\n  },\n  \"limit\": 5,\n  \"offset\": 0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/FarmerAgriStack/search",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "FarmerAgriStack",
+                "search"
+              ]
+            },
+            "description": "Uses the 'contains' operator to match farmers whose crop_type includes Paddy."
+          },
+          "response": []
+        }
+      ],
+      "description": "Search API examples for the FarmerAgriStack registry."
+    },
+    {
+      "name": "PDS",
+      "item": [
+        {
+          "name": "Search by ration_card_number",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filters\": {\n    \"ration_card_number\": {\n      \"eq\": \"10-328-962-697363\"\n    }\n  },\n  \"limit\": 5,\n  \"offset\": 0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/PDS/search",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "PDS",
+                "search"
+              ]
+            },
+            "description": "Fetch a single ration card record by its ration_card_number."
+          },
+          "response": []
+        },
+        {
+          "name": "Search by aadhaar_number",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filters\": {\n    \"aadhaar_number\": {\n      \"eq\": \"434655547205\"\n    }\n  },\n  \"limit\": 5,\n  \"offset\": 0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/PDS/search",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "PDS",
+                "search"
+              ]
+            },
+            "description": "Fetch a ration card by the linked Aadhaar number."
+          },
+          "response": []
+        },
+        {
+          "name": "List PHH ration cards",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filters\": {\n    \"ration_card_type\": {\n      \"eq\": \"PHH\"\n    }\n  },\n  \"limit\": 5,\n  \"offset\": 0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/PDS/search",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "PDS",
+                "search"
+              ]
+            },
+            "description": "Filter on ration_card_type to list all Priority Household cards."
+          },
+          "response": []
+        }
+      ],
+      "description": "Search API examples for the PDS registry."
+    },
+    {
+      "name": "Student",
+      "item": [
+        {
+          "name": "Search by udise_student_id",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filters\": {\n    \"udise_student_id\": {\n      \"eq\": \"BR1547472731738\"\n    }\n  },\n  \"limit\": 5,\n  \"offset\": 0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/Student/search",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "Student",
+                "search"
+              ]
+            },
+            "description": "Fetch a single student record by its UDISE+ student ID."
+          },
+          "response": []
+        },
+        {
+          "name": "Search by guardian_aadhaar_number",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filters\": {\n    \"guardian_aadhaar_number\": {\n      \"eq\": \"434655547205\"\n    }\n  },\n  \"limit\": 5,\n  \"offset\": 0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/Student/search",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "Student",
+                "search"
+              ]
+            },
+            "description": "List every child linked to one guardian's Aadhaar number (siblings)."
+          },
+          "response": []
+        },
+        {
+          "name": "List students with active scholarship",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filters\": {\n    \"scholarship_status\": {\n      \"eq\": \"Active\"\n    }\n  },\n  \"limit\": 5,\n  \"offset\": 0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/Student/search",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "Student",
+                "search"
+              ]
+            },
+            "description": "Filter on scholarship_status to list scholarship recipients."
+          },
+          "response": []
+        }
+      ],
+      "description": "Search API examples for the Student registry."
+    },
+    {
+      "name": "Pension",
+      "item": [
+        {
+          "name": "Search by beneficiary_id",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filters\": {\n    \"beneficiary_id\": {\n      \"eq\": \"SSP-BR-2026-372677\"\n    }\n  },\n  \"limit\": 5,\n  \"offset\": 0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/Pension/search",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "Pension",
+                "search"
+              ]
+            },
+            "description": "Fetch a single pension record by its SSPMIS beneficiary_id."
+          },
+          "response": []
+        },
+        {
+          "name": "Search by household_id",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filters\": {\n    \"household_id\": {\n      \"eq\": \"HH-BR-0000002\"\n    }\n  },\n  \"limit\": 5,\n  \"offset\": 0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/Pension/search",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "Pension",
+                "search"
+              ]
+            },
+            "description": "List pension records linked to a household (cross-registry join key)."
+          },
+          "response": []
+        },
+        {
+          "name": "List MVPY scheme beneficiaries",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filters\": {\n    \"scheme_name\": {\n      \"eq\": \"MVPY\"\n    }\n  },\n  \"limit\": 5,\n  \"offset\": 0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/Pension/search",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "Pension",
+                "search"
+              ]
+            },
+            "description": "Filter on scheme_name to list all beneficiaries under one pension scheme."
+          },
+          "response": []
+        }
+      ],
+      "description": "Search API examples for the Pension registry."
+    },
+    {
+      "name": "BiharBhumi",
+      "item": [
+        {
+          "name": "Search by jamabandi_number",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filters\": {\n    \"jamabandi_number\": {\n      \"eq\": \"JB-PAT-TEK-1713\"\n    }\n  },\n  \"limit\": 5,\n  \"offset\": 0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/BiharBhumi/search",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "BiharBhumi",
+                "search"
+              ]
+            },
+            "description": "Fetch a single land record by its Register-II jamabandi_number."
+          },
+          "response": []
+        },
+        {
+          "name": "Search by household_id",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filters\": {\n    \"household_id\": {\n      \"eq\": \"HH-BR-0000001\"\n    }\n  },\n  \"limit\": 5,\n  \"offset\": 0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/BiharBhumi/search",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "BiharBhumi",
+                "search"
+              ]
+            },
+            "description": "List land records linked to a household (cross-registry join key)."
+          },
+          "response": []
+        },
+        {
+          "name": "List records with approved mutation",
+          "request": {
+            "method": "POST",
+            "header": [
+              {
+                "key": "Content-Type",
+                "value": "application/json"
+              }
+            ],
+            "body": {
+              "mode": "raw",
+              "raw": "{\n  \"filters\": {\n    \"mutation_status\": {\n      \"eq\": \"Approved\"\n    }\n  },\n  \"limit\": 5,\n  \"offset\": 0\n}"
+            },
+            "url": {
+              "raw": "{{base_url}}/api/v1/BiharBhumi/search",
+              "host": [
+                "{{base_url}}"
+              ],
+              "path": [
+                "api",
+                "v1",
+                "BiharBhumi",
+                "search"
+              ]
+            },
+            "description": "Filter on mutation_status to list land records with an approved Dakhil-Kharij mutation."
+          },
+          "response": []
+        }
+      ],
+      "description": "Search API examples for the BiharBhumi registry."
+    }
+  ]
+}
