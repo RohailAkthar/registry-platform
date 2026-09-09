@@ -186,39 +186,175 @@ function buildSchemaDataFromExternal(data: any, registerType?: string) {
     }
 
     // -------------------------------------------------------------
-    // HOUSEHOLD INTAKE FORM
+    // FARMER INTAKE FORM (AgriStack + BiharBhumi Integration)
     // -------------------------------------------------------------
-    // 1. Household Headship & Details (a0000000-0000-4000-8000-000000000002)
+    if (registerType === 'farmer') {
+        const farmerName = farmer?.farmer_name || land?.rayat_name || summary?.head_name || 'Farmer';
+        const nameParts = farmerName.trim().split(/\s+/);
+        const firstName = nameParts[0] || 'Farmer';
+        const lastName = nameParts.slice(1).join(' ') || '';
+        const mobile = farmer?.farmer_mobile_number || farmer?.mobile_number || summary?.phone || '';
+        const district = farmer?.district || land?.district || summary?.district || 'Nalanda';
+        const block = farmer?.block || land?.anchal || summary?.block || 'Hilsa';
+        const village = farmer?.village || land?.mauza || summary?.village || 'Bishunpur';
+        const bankAccountNo = farmer?.farmer_bank_account_no || farmer?.bank_account_no || summary?.bank_account_no || '';
+        const ifscCode = summary?.ifsc || 'SBIN0007629';
+        const bankName = getBankName(ifscCode, bankAccountNo);
+
+        schema['a0000000-0000-4000-8000-000000000003'] = {
+            foundational_id: data.aadhaar || searched_aadhaar,
+            first_name: firstName,
+            last_name: lastName,
+            gender: 'MALE',
+            birth_date: '1982-05-14',
+            estimated_age: 44,
+            mobile_phone_number: mobile,
+            district: district,
+            block: block,
+            village: village,
+            region_code: 'Bihar',
+            zone_subcity_code: district,
+            woreda_code: block,
+            kebele_code: village,
+            has_personal_phone: Boolean(mobile),
+            source_of_income: 'CROP_PRODUCTION',
+            education_level: 'BASIC',
+            disabled: false,
+
+            // AgriStack attributes
+            farmer_id: farmer?.farmer_id || (land ? `BR-${searched_aadhaar}` : ''),
+            relation_name: farmer?.relation_name || '',
+            crop_type: farmer?.crop_type || 'Paddy, Wheat',
+            land_area_acres: Number(farmer?.land_area_acres) || Number(land?.rakba_area) || 0,
+            land_ownership_type: farmer?.land_ownership_type || 'Owner / Raiyati',
+            khata_number: String(farmer?.khata_number || land?.khata_number || ''),
+            khesra_number: String(farmer?.khesra_number || land?.khesra_numbers || ''),
+            khatiyan_number: farmer?.khatiyan_number || (land ? `KH-${land.khata_number}` : ''),
+            pm_kisan_enrolled: Boolean(farmer?.pm_kisan_enrolled),
+            pmfby_enrolled: Boolean(farmer?.pmfby_enrolled),
+            farmer_bank_account_no: bankAccountNo,
+            bank_name: bankName,
+            ifsc_code: ifscCode,
+        };
+
+        // Operated Land Parcels (b0000000-0000-4000-8000-000000000050)
+        const landRecords: any[] = [];
+        const bhumiList = Array.isArray(registries?.BiharBhumi) ? registries.BiharBhumi : (land ? [land] : []);
+        for (const b of bhumiList) {
+            landRecords.push({
+                jamabandi_number: b.jamabandi_number || '',
+                khata_number: String(b.khata_number || ''),
+                khesra_numbers: String(b.khesra_numbers || ''),
+                rakba_area: Number(b.rakba_area) || 0,
+                land_ownership_type: 'OWNER',
+                mauza: b.mauza || village,
+                anchal: b.anchal || block,
+                district: b.district || district,
+            });
+        }
+        if (landRecords.length === 0 && farmer) {
+            landRecords.push({
+                jamabandi_number: `FARM-${farmer.farmer_id}`,
+                khata_number: String(farmer.khata_number || ''),
+                khesra_numbers: String(farmer.khesra_number || ''),
+                rakba_area: Number(farmer.land_area_acres) || 0,
+                land_ownership_type: farmer.land_ownership_type || 'OWNER',
+                mauza: farmer.village || village,
+                anchal: farmer.block || block,
+                district: farmer.district || district,
+            });
+        }
+        schema['b0000000-0000-4000-8000-000000000050'] = { records: landRecords };
+
+        // Standing Crops (b0000000-0000-4000-8000-000000000051)
+        const cropRecords: any[] = [];
+        const crops = (farmer?.crop_type || 'Paddy, Wheat').split(',');
+        for (let i = 0; i < crops.length; i++) {
+            cropRecords.push({
+                commodity: crops[i].trim(),
+                season: i % 2 === 0 ? 'Kharif' : 'Rabi',
+                area_cultivated_acres: Number(((Number(farmer?.land_area_acres) || 2.5) / crops.length).toFixed(2)),
+                end_use: 'FOOD_HUMAN_CONSUMPTION',
+            });
+        }
+        schema['b0000000-0000-4000-8000-000000000051'] = { records: cropRecords };
+
+        return schema;
+    }
+
+    // -------------------------------------------------------------
+    // HOUSEHOLD INTAKE FORM (Anchor + Enrich Architecture)
+    // -------------------------------------------------------------
+    // Compute demographic breakdown from family roster
+    let sizeAdults = 0;
+    let sizeChildrenU5 = 0;
+    let sizeSchoolAge = 0;
+    let sizeElderly = 0;
+    let femaleCount = 0;
+    let maleCount = 0;
+
+    if (family_members && family_members.length > 0) {
+        for (const m of family_members) {
+            const age = m.age ?? (m.dob ? (2026 - new Date(m.dob).getFullYear()) : 30);
+            if (age < 5) sizeChildrenU5++;
+            else if (age <= 17) sizeSchoolAge++;
+            else if (age >= 60) sizeElderly++;
+            else sizeAdults++;
+
+            const g = (m.gender || '').toUpperCase();
+            if (g === 'FEMALE' || g === 'F') femaleCount++;
+            else maleCount++;
+        }
+    } else {
+        sizeAdults = 2;
+        sizeSchoolAge = 2;
+        femaleCount = 2;
+        maleCount = 2;
+    }
+
+    const totalCalculatedSize = family_members?.length || pds?.family_member_count || 4;
+
+    // 1. Household Headship & Demographics & Location (a0000000-0000-4000-8000-000000000002)
     schema['a0000000-0000-4000-8000-000000000002'] = {
-        household_head_person_id: searched_aadhaar,
-        household_head_name: summary?.head_name || land?.rayat_name || pds?.head_of_household_name || '',
-        headship_type: shg && !land ? 'FEMALE_HEADED' : 'MALE_HEADED',
-        size_total: family_members?.length || (pds?.family_member_count ? Number(pds.family_member_count) : 3),
+        household_head_person_id: data.aadhaar || searched_aadhaar,
+        household_head_name: summary?.head_name || pds?.head_of_household_name || '',
+        headship_type: (pds?.gender || '').toUpperCase() === 'F' ? 'FEMALE_HEADED' : 'MALE_HEADED',
+        size_total: totalCalculatedSize,
+        size_adults: sizeAdults,
+        size_children_u5: sizeChildrenU5,
+        size_school_age: sizeSchoolAge,
+        size_elderly: sizeElderly,
+        number_of_female_members: femaleCount,
+        number_of_male_members: maleCount,
+        elderly_member_present: sizeElderly > 0,
         dwelling_type: 'PERMANENT',
-        roof_material: 'CONCRETE',
-        wall_material: 'BRICK',
-        floor_material: 'CEMENT',
         tenure_status: 'OWNED',
-        water_source_type: 'BOREHOLE',
-        sanitation_type: 'FLUSH_TOILET',
-        lighting_source: 'GRID',
-        cooking_fuel_type: 'LPG',
-        rooms_count: 3,
         region_code: 'Bihar',
-        zone_subcity_code: summary?.district || land?.district || shg?.district || 'Gaya',
-        woreda_code: summary?.block || land?.anchal || shg?.block || 'Tekari',
-        locality_ea_code: shg?.gp || 'Amethi GP',
-        kebele_code: summary?.village || land?.mauza || shg?.village || 'Amethi',
-        address_line_1: `${summary?.village || land?.mauza || ''}, ${summary?.block || land?.anchal || ''}`,
-        address_descriptor: `${summary?.village || land?.mauza || ''}, ${summary?.block || land?.anchal || ''}, ${summary?.district || ''}, Bihar`,
-        record_name: summary?.head_name ? `${summary.head_name} Household` : 'Household',
+        zone_subcity_code: summary?.district || pds?.district || 'Nalanda',
+        woreda_code: summary?.block || pds?.block || 'Rajgir',
+        locality_ea_code: summary?.gp || `${summary?.block || pds?.block || 'Rajgir'} GP`,
+        kebele_code: summary?.village || summary?.block || pds?.block || 'Rajgir',
+        address_line_1: `${summary?.block || pds?.block || 'Rajgir'}, ${summary?.district || pds?.district || 'Nalanda'}, Bihar`,
+        address_descriptor: `Ration Card #${pds?.ration_card_number || summary?.ration_card_number || ''}, ${pds?.dealer_name || summary?.dealer_name || 'FPS Store'} (${pds?.fps_shop_code || summary?.fps_shop_code || ''}), ${summary?.block || pds?.block || 'Rajgir'}, ${summary?.district || pds?.district || 'Nalanda'}`,
+        record_name: summary?.head_name ? `Household of ${summary.head_name}` : 'Household',
+    };
+
+    // Helper to normalize relationship to OpenG2P RelationshipToHeadEnum
+    const normalizeRelationship = (rel: string | undefined | null): string => {
+        const r = (rel || '').toLowerCase().trim();
+        if (r === 'head' || r === 'self') return 'SELF';
+        if (r === 'spouse' || r === 'wife' || r === 'husband') return 'SPOUSE';
+        if (r === 'son' || r === 'daughter' || r === 'child') return 'CHILD';
+        if (r === 'father' || r === 'mother' || r === 'parent') return 'PARENT';
+        if (r === 'brother' || r === 'sister' || r === 'sibling') return 'SIBLING';
+        return 'OTHER_RELATIVE';
     };
 
     // 2. Household Members Roster (a0000000-0000-4000-8000-000000000001)
     const memberRecords: any[] = [];
     if (family_members && family_members.length > 0) {
         for (const m of family_members) {
-            const nameParts = (m.name || 'Member').trim().split(' ');
+            const nameParts = (m.name || 'Member').trim().split(/\s+/);
             const firstName = nameParts[0] || 'Member';
             const lastName = nameParts.slice(1).join(' ') || firstName;
             memberRecords.push({
@@ -227,120 +363,44 @@ function buildSchemaDataFromExternal(data: any, registerType?: string) {
                 last_name: lastName,
                 gender: m.gender || 'UNKNOWN',
                 birth_date: m.dob || '1990-01-01',
-                relationship_to_head: m.relationship === 'Head' ? 'SELF' : (m.relationship?.toUpperCase() || 'OTHER'),
+                relationship_to_head: normalizeRelationship(m.relationship),
             });
         }
     } else if (summary?.head_name) {
-        const nameParts = summary.head_name.trim().split(' ');
+        const nameParts = summary.head_name.trim().split(/\s+/);
         memberRecords.push({
-            foundational_id: searched_aadhaar,
+            foundational_id: data.aadhaar || searched_aadhaar,
             first_name: nameParts[0] || 'Head',
             last_name: nameParts.slice(1).join(' ') || 'Head',
             gender: 'MALE',
-            birth_date: '1985-01-01',
+            birth_date: '1982-05-14',
             relationship_to_head: 'SELF',
         });
     }
     schema['a0000000-0000-4000-8000-000000000001'] = { records: memberRecords };
 
-    // 3. BiharBhumi Land Records (b0000000-0000-4000-8000-000000000030)
-    const assetRecords: any[] = [];
-    if (land) {
-        assetRecords.push({
-            jamabandi_number: land.jamabandi_number || '',
-            khata_number: String(land.khata_number || ''),
-            khesra_numbers: String(land.khesra_numbers || ''),
-            rayat_name: land.rayat_name || summary?.head_name || '',
-            rakba_area: Number(land.rakba_area) || 0,
-            land_type: land.land_type || 'Raiyati',
-            mauza: land.mauza || summary?.village || '',
-            anchal: land.anchal || summary?.block || '',
-            district: land.district || summary?.district || '',
-            mutation_status: land.mutation_status || 'Approved',
-            last_mutation_date: land.last_mutation_date || '2025-05-15',
-            lpc_status: land.lpc_status || 'Issued',
-            lpc_certificate_number: land.lpc_certificate_number || 'LPC-BR-99201',
-            encumbrance_status: land.encumbrance_status || 'Nil',
-            bhu_lagan_paid_status: Boolean(land.bhu_lagan_paid_status),
-            registration_deed_number: land.registration_deed_number || 'DEED-9921',
-            asset_type: 'LAND',
-            asset_category: `Agricultural Land (Jamabandi: ${land.jamabandi_number || 'N/A'}, Khata: ${land.khata_number || 'N/A'})`,
-            quantity: 1,
-            size_band: `${land.rakba_area || '0'} Acres`,
-        });
-    }
-    if (farmer && (!land || farmer.land_area_acres !== land.rakba_area)) {
-        assetRecords.push({
-            jamabandi_number: `FARM-${farmer.farmer_id || ''}`,
-            khata_number: String(farmer.khata_number || ''),
-            khesra_numbers: String(farmer.khesra_number || ''),
-            rayat_name: farmer.farmer_name || '',
-            rakba_area: Number(farmer.land_area_acres) || 0,
-            land_type: `Cultivated (${farmer.crop_type || 'Crops'})`,
-            mauza: summary?.village || '',
-            anchal: summary?.block || '',
-            district: summary?.district || '',
-            mutation_status: 'Active Cultivation',
-            last_mutation_date: '2026-01-01',
-            lpc_status: farmer.pm_kisan_enrolled ? 'PM-KISAN Enrolled' : 'Not Enrolled',
-            lpc_certificate_number: 'LPC-PMKISAN',
-            encumbrance_status: 'Nil',
-            bhu_lagan_paid_status: true,
-            registration_deed_number: 'AGRI-DEED-1',
-            asset_type: 'LAND',
-            asset_category: `Cultivated Farm (${farmer.crop_type || 'Crops'})`,
-            quantity: 1,
-            size_band: `${farmer.land_area_acres || '0'} Acres`,
-        });
-    }
-    if (assetRecords.length > 0) {
-        schema['b0000000-0000-4000-8000-000000000030'] = { records: assetRecords };
-    }
-
-    // 4. JEEViKA SHG Records (b0000000-0000-4000-8000-000000000090.records)
-    const shgRecords: any[] = [];
-    if (shg) {
-        shgRecords.push({
-            shg_id: shg.shg_id || 'SHG-7749',
-            shg_name: shg.shg_name || '',
-            vo_name: shg.vo_name || 'Urvashi VO',
-            clf_name: shg.clf_name || 'Tekari CLF',
-            member_name: shg.member_name || '',
-            shg_role: shg.shg_role || 'Member',
-            shg_grading: shg.shg_grading || 'B',
-            monthly_savings_amount: Number(shg.monthly_savings_amount) || 0,
-            internal_loan_outstanding: Number(shg.internal_loan_outstanding) || 0,
-            ccl_limit: Number(shg.ccl_limit) || 0,
-            ccl_utilised: Number(shg.ccl_utilised) || 0,
-            bank_account_no: String(shg.bank_account_no || ''),
-            ifsc: shg.ifsc || '',
-            shg_join_date: shg.shg_join_date || '2021-01-01',
-            gp: shg.gp || summary?.gp || '',
-            village: shg.village || summary?.village || '',
-        });
-    }
-
-    // 5. PDS Ration Food Security (b0000000-0000-4000-8000-000000000095.records)
+    // 3. PDS Ration Food Security (b0000000-0000-4000-8000-000000000095.records)
     const pdsRecords: any[] = [];
-    if (pds) {
+    const pdsList = Array.isArray(registries?.PDS) ? registries.PDS : (pds ? [pds] : []);
+    const seenRationCards = new Set<string>();
+    for (const p of pdsList) {
+        const rc = (p.ration_card_number || '').trim();
+        if (!rc || seenRationCards.has(rc)) continue;
+        seenRationCards.add(rc);
         pdsRecords.push({
-            ration_card_number: pds.ration_card_number || '',
-            ration_card_type: pds.ration_card_type || 'PHH',
-            head_of_household_name: pds.head_of_household_name || summary?.head_name || '',
-            family_member_count: Number(pds.family_member_count) || family_members?.length || 3,
-            fps_shop_code: pds.fps_shop_code || 'FPS-4150',
-            dealer_name: pds.dealer_name || 'Johal Store',
-            e_kyc_status: pds.e_kyc_status || 'Verified',
-            last_transaction_date: pds.last_transaction_date || '2026-06-03',
-            monthly_entitlement_kg: Number(pds.monthly_entitlement_kg) || 15,
-            district: pds.district || summary?.district || 'Gaya',
-            block: pds.block || summary?.block || 'Tekari',
+            ration_card_number: rc,
+            ration_card_type: p.ration_card_type || 'PHH',
+            head_of_household_name: p.head_of_household_name || summary?.head_name || '',
+            family_member_count: Number(p.family_member_count) || family_members?.length || 4,
+            fps_shop_code: p.fps_shop_code || 'FPS-6425',
+            dealer_name: p.dealer_name || 'Vora Store',
+            e_kyc_status: p.e_kyc_status || 'Verified',
+            last_transaction_date: p.last_transaction_date || '2025-10-18',
+            monthly_entitlement_kg: Number(p.monthly_entitlement_kg) || 15,
+            district: p.district || summary?.district || 'Nalanda',
+            block: p.block || summary?.block || 'Hilsa',
         });
     }
-
-    // SHG Enrolments
-    schema['b0000000-0000-4000-8000-000000000090'] = { records: shgRecords };
-    // PDS Food Security
     schema['b0000000-0000-4000-8000-000000000095'] = { records: pdsRecords };
 
     return schema;
@@ -400,6 +460,7 @@ export default function NewIntakeFormSubmissionPage() {
             <div className="mx-7.5 py-4">
                 {/* 1. GramStack Multi-Registry Autofetch Bar */}
                 <AadhaarAutofetchBar
+                    registerType={registerType}
                     onDataFetched={handleDataFetched}
                     onReset={handleReset}
                     activeSources={externalData?.sources_found || []}

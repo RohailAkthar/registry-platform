@@ -1,6 +1,6 @@
 'use client';
 
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 import { useRouter } from '@/i18n/navigation';
 import { useTranslations } from 'next-intl';
 import {
@@ -70,11 +70,21 @@ export default function Home() {
 
     const { registers } = useRegister();
 
-    const registerList =
-        registers.map(r => ({
-            value: r.register_mnemonic.toLowerCase(),
-            label: t(r.register_subject),
-        }));
+    const registerList = useMemo(() => {
+        const getRank = (r: any) => {
+            const name = (r.register_mnemonic || r.register_subject || '').toLowerCase();
+            if (name.includes('household')) return 1;
+            if (name.includes('individual')) return 2;
+            if (name.includes('farmer')) return 3;
+            return 99;
+        };
+        return [...registers]
+            .sort((a, b) => getRank(a) - getRank(b))
+            .map(r => ({
+                value: r.register_mnemonic.toLowerCase(),
+                label: t(r.register_subject),
+            }));
+    }, [registers, t]);
 
     const taskArtifactOptions = TASK_ARTIFACT_FILTER_OPTIONS.map((opt) => ({
         value: opt.value,

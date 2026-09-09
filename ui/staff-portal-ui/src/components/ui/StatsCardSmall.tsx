@@ -23,9 +23,18 @@ const StatsCardSmall = ({
         if (!data) return { title: t('items'), rows: [] };
 
         if (Array.isArray(data)) {
+            const getRank = (item: any) => {
+                const name = (item.register_mnemonic || item.register_subject || '').toLowerCase();
+                if (name.includes('household')) return 1;
+                if (name.includes('individual')) return 2;
+                if (name.includes('farmer')) return 3;
+                return 99;
+            };
+            const sorted = [...data].sort((a, b) => getRank(a) - getRank(b));
+
             return {
                 title: t('registers'),
-                rows: data.slice(0, 2).map((item) => ({
+                rows: sorted.slice(0, 5).map((item) => ({
                     id: item.register_id,
                     label: t(item.register_subject),
                     value: item.total_record_count,

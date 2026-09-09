@@ -9,6 +9,7 @@ interface AadhaarAutofetchBarProps {
     activeSources?: string[];
     loading?: boolean;
     fetchedData?: any;
+    registerType?: string;
 }
 
 export default function AadhaarAutofetchBar({
@@ -16,9 +17,14 @@ export default function AadhaarAutofetchBar({
     onReset,
     activeSources = [],
     loading: externalLoading = false,
+    fetchedData,
+    registerType,
 }: AadhaarAutofetchBarProps) {
     const [aadhaarInput, setAadhaarInput] = useState('');
     const [loading, setLoading] = useState(false);
+    const [statusStage, setStatusStage] = useState<string>('');
+
+    const isFarmer = registerType === 'farmer';
 
     const handleSearch = async (aadhaarToSearch?: string) => {
         const target = (aadhaarToSearch || aadhaarInput).trim();
@@ -28,33 +34,52 @@ export default function AadhaarAutofetchBar({
         }
 
         setLoading(true);
+            setStatusStage(isFarmer ? 'Searching Farmer & Land Registries...' : 'Searching PDS Registry & Resolving Family Roster...');
         try {
-            const res = await fetch(`/api/external-fetch?aadhaar=${encodeURIComponent(target)}`);
+            const url = isFarmer
+                ? `/api/external-fetch?aadhaar=${encodeURIComponent(target)}&registerType=farmer`
+                : `/api/external-fetch?aadhaar=${encodeURIComponent(target)}`;
+            const res = await fetch(url);
             if (!res.ok) {
                 throw new Error('Failed to fetch from external registries');
             }
             const data = await res.json();
             if (data.status === 'not_found' || !data.sources_found || data.sources_found.length === 0) {
-                toast.error(`No records found for Aadhaar: ${target}`);
+                toast.error(`No records found in PDS for: ${target}`);
             } else {
-                toast.success(
-                    `✨ Autofetched data from ${data.sources_found.length} registries: ${data.sources_found.join(', ')}`
-                );
+                if (isFarmer) {
+                    toast.success(`✨ Found Farmer profile & land records from AgriStack & BiharBhumi!`);
+                } else {
+                    toast.success(
+                        `✨ Household resolved from PDS! (${data.family_members?.length || 1} family members loaded)`
+                    );
+                }
                 onDataFetched(data);
             }
         } catch (err: any) {
             toast.error(err.message || 'Error connecting to external registries');
         } finally {
             setLoading(false);
+            setStatusStage('');
         }
     };
 
     const handleClear = () => {
         setAadhaarInput('');
+        setStatusStage('');
         onReset?.();
     };
 
     const isSearching = loading || externalLoading;
+
+    const registryList = isFarmer
+        ? [
+              { id: 'FarmerAgriStack', label: 'Farmer AgriStack', icon: '🚜', role: 'PRIMARY' },
+              { id: 'BiharBhumi', label: 'BiharBhumi (Land Records)', icon: '🌾', role: 'ENRICH' },
+          ]
+        : [
+              { id: 'PDS', label: 'PDS Food Security (Ration Card)', icon: '🍚', role: 'PRIMARY' },
+          ];
 
     return (
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-[#0B1E36] via-[#16385C] to-[#0A192F] p-6 mb-8 text-white shadow-2xl border border-white/10">
@@ -66,20 +91,24 @@ export default function AadhaarAutofetchBar({
             <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
                 <div className="flex items-center gap-3.5">
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 text-slate-950 font-black text-xl shadow-lg shadow-amber-500/30">
-                        ⚡
+                        {isFarmer ? '🚜' : '🍚'}
                     </div>
                     <div>
                         <div className="flex items-center gap-2.5">
                             <h2 className="text-xl font-extrabold tracking-tight text-white">
-                                GramStack Multi-Registry Autofetch
+                                {isFarmer
+                                    ? 'Farmer Registry Autofetch (AgriStack + BiharBhumi)'
+                                    : 'Household Registry Formation (PDS / Ration Card)'}
                             </h2>
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 shadow-sm">
                                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
-                                6 APIs Live
+                                {isFarmer ? '2 Agri APIs Live' : 'PDS API Live'}
                             </span>
                         </div>
                         <p className="text-xs text-blue-200/80 mt-0.5">
-                            Real-time federated lookup across BiharBhumi, JEEViKA SHG LokOS, AgriStack, PDS, Pension & Student UDISE+
+                            {isFarmer
+                                ? 'Direct lookup in AgriStack Farmer Registry ➔ Enrich land parcels & cadastral records from BiharBhumi'
+                                : 'Lookup by Aadhaar or Ration Card Number ➔ Auto-populates Head Demographics, Full Family Roster & Food Entitlements'}
                         </p>
                     </div>
                 </div>
@@ -94,11 +123,15 @@ export default function AadhaarAutofetchBar({
                     <input
                         type="text"
                         value={aadhaarInput}
-                        onChange={(e) => setAadhaarInput(e.target.value.replace(/\D/g, ''))}
+                        onChange={(e) => setAadhaarInput(e.target.value.replace(/[^0-9A-Za-z-]/g, ''))}
                         onKeyDown={(e) => e.key === 'Enter' && handleSearch()}
-                        placeholder="Enter 12-digit Citizen or Student Aadhaar Number..."
+                        placeholder={
+                            isFarmer
+                                ? 'Enter 12-digit Farmer Aadhaar Number...'
+                                : 'Enter 12-digit Aadhaar Number or Ration Card Number (e.g. 10-559-690-397262)...'
+                        }
                         className="w-full bg-white/95 hover:bg-white text-slate-900 placeholder-slate-400 pl-11 pr-10 py-3.5 rounded-xl font-mono text-base font-semibold tracking-wider border-0 focus:ring-2 focus:ring-amber-400 shadow-inner transition-all"
-                        maxLength={12}
+                        maxLength={isFarmer ? 12 : 20}
                     />
                     {aadhaarInput && (
                         <button
@@ -128,17 +161,17 @@ export default function AadhaarAutofetchBar({
                                     <circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" fill="none" />
                                     <path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8v8H4z" />
                                 </svg>
-                                <span>Querying 6 Registries...</span>
+                                <span>{statusStage || 'Searching...'}</span>
                             </>
                         ) : (
                             <>
                                 <span className="text-base">🔍</span>
-                                <span>Fetch & Pre-fill Form</span>
+                                <span>{isFarmer ? 'Fetch Farmer Details' : 'Form Household Registry'}</span>
                             </>
                         )}
                     </button>
 
-                    {activeSources.length > 0 && (
+                    {(activeSources.length > 0 || fetchedData) && (
                         <button
                             type="button"
                             onClick={handleClear}
@@ -150,17 +183,12 @@ export default function AadhaarAutofetchBar({
                 </div>
             </div>
 
-            {/* Bottom Bar: Interactive Registry Status Pills */}
+            {/* Bottom Bar: Registry Roles (Anchor vs Enrich) Status Pills */}
             <div className="relative z-10 flex flex-wrap items-center gap-2 pt-4 mt-4 border-t border-white/10">
-                <span className="text-xs font-semibold text-blue-200/90 mr-1">Registry Sources:</span>
-                {[
-                    { id: 'SHGLokOS', label: 'SHG LokOS', icon: '🤝' },
-                    { id: 'BiharBhumi', label: 'BiharBhumi (Land)', icon: '🌾' },
-                    { id: 'FarmerAgriStack', label: 'AgriStack', icon: '🚜' },
-                    { id: 'PDS', label: 'PDS Food Security', icon: '🍚' },
-                    { id: 'Pension', label: 'Social Pension', icon: '👵' },
-                    { id: 'Student', label: 'Student UDISE+', icon: '🎓' },
-                ].map((reg) => {
+                <span className="text-xs font-semibold text-blue-200/90 mr-1">
+                    {isFarmer ? 'Agricultural Registries:' : 'Federated Registries:'}
+                </span>
+                {registryList.map((reg) => {
                     const isFound = activeSources.includes(reg.id);
                     return (
                         <span
@@ -173,6 +201,13 @@ export default function AadhaarAutofetchBar({
                         >
                             <span>{reg.icon}</span>
                             <span>{reg.label}</span>
+                            {(reg.role === 'ANCHOR' || reg.role === 'PRIMARY') && (
+                                <span className={`text-[9px] px-1.5 py-0.2 rounded font-black tracking-wider ${
+                                    isFound ? 'bg-emerald-800 text-emerald-100' : 'bg-blue-500/30 text-blue-200'
+                                }`}>
+                                    {reg.role}
+                                </span>
+                            )}
                             {isFound && <span className="text-[10px] bg-emerald-700 text-white rounded-full px-1.5 py-0.2">✓</span>}
                         </span>
                     );

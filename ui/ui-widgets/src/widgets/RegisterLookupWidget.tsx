@@ -63,6 +63,46 @@ const parsePagination = (
   return { totalItems, totalPages, currentPage: pagination.current_page ?? fallbackPage };
 };
 
+const LOOKUP_FIELD_LABELS: Record<string, string> = {
+  record_name: 'Household Name',
+  functional_record_id: 'Household ID',
+  internal_record_id: 'Record ID',
+  household_head_name: 'Head of Household',
+  household_head_person_id: 'Head Aadhaar',
+  headship_type: 'Headship Type',
+  size_total: 'Total Members',
+  household_size_total: 'Total Members',
+  zone_subcity_code: 'District',
+  woreda_code: 'Block / Anchal',
+  locality_ea_code: 'Gram Panchayat',
+  kebele_code: 'Village / Mauza',
+  address_line_1: 'Address',
+  address_descriptor: 'Address Details',
+  dwelling_type: 'Dwelling Type',
+  tenure_status: 'Tenure Status',
+  first_name: 'First Name',
+  last_name: 'Last Name',
+  birth_date: 'Date of Birth',
+  gender: 'Gender',
+  foundational_id: 'Aadhaar Number',
+  relationship_to_head: 'Relationship to Head',
+};
+
+const resolveLookupLabel = (rawLabel: string, translateConfig: (v: string) => string): string => {
+  const key = (rawLabel || '').trim();
+  if (LOOKUP_FIELD_LABELS[key]) {
+    return LOOKUP_FIELD_LABELS[key];
+  }
+  const translated = translateConfig(key);
+  if (translated && translated !== key && !translated.includes('_')) {
+    return LOOKUP_FIELD_LABELS[translated] || translated;
+  }
+  return key
+    .replace(/_/g, ' ')
+    .replace(/([a-z])([A-Z])/g, '$1 $2')
+    .replace(/\b\w/g, (c) => c.toUpperCase());
+};
+
 const RecordDisplayPanel = ({
   row,
   widgetIdPrefix,
@@ -96,7 +136,7 @@ const RecordDisplayPanel = ({
 
   const optionalSlot = (field: { label: string; value: string } | undefined, slot: string) =>
     field
-      ? fieldSlot(`${widgetIdPrefix}-${field.label}`, translateConfig(field.label), field.value)
+      ? fieldSlot(`${widgetIdPrefix}-${field.label}`, resolveLookupLabel(field.label, translateConfig), field.value)
       : <div key={slot} className="mb-[10px] invisible text-base">&nbsp;</div>;
 
   const column = (showDivider: boolean, isFirst: boolean, children: React.ReactNode) => (
@@ -127,9 +167,9 @@ const RecordDisplayPanel = ({
           overflow: hidden !important;
         }
         .register-lookup-record-panel .DisplayFieldWidget > .text-base.text-gray-600 {
-          width: 50% !important;
-          min-width: 50% !important;
-          max-width: 50% !important;
+          width: 48% !important;
+          min-width: 44% !important;
+          max-width: 52% !important;
           flex-shrink: 0 !important;
           overflow: hidden !important;
           text-overflow: ellipsis !important;
@@ -149,12 +189,12 @@ const RecordDisplayPanel = ({
           <>
             {fieldSlot(
               `${widgetIdPrefix}-record_name`,
-              translateConfig('record_name'),
+              resolveLookupLabel('record_name', translateConfig),
               row.record_name == null || row.record_name === '' ? '-' : String(row.record_name),
             )}
             {fieldSlot(
               `${widgetIdPrefix}-functional_record_id`,
-              translateConfig('functional_record_id'),
+              resolveLookupLabel('functional_record_id', translateConfig),
               row.functional_record_id == null || row.functional_record_id === '' ? '-' : String(row.functional_record_id),
             )}
           </>
@@ -294,7 +334,7 @@ const ResultsTable = ({
                 key={col.key}
                 className="text-left px-4 py-2 text-sm font-medium text-gray-600 whitespace-nowrap border-b border-gray-200 bg-gray-50"
               >
-                {translateConfig(col.header)}
+                {resolveLookupLabel(col.header, translateConfig)}
               </th>
             ))}
           </tr>

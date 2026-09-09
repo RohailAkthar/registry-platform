@@ -6,3 +6,5 @@ export async function GET() {
 
     return NextResponse.redirect(`${backendConfig.iamUrl}/auth/logout`);
 }
+
+
