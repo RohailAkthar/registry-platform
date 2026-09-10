@@ -161,8 +161,21 @@ async def _resolve_classes(section_register_id: str, session):
     if not register_definition:
         raise ValueError(f"Register definition '{section_register_id}' was not found")
 
-    module = importlib.import_module(_DOMAIN_MODELS_MODULE)
     register_mnemonic = register_definition.register_mnemonic
+    for mod_name in [_DOMAIN_MODELS_MODULE, "openg2p_registry_nsr_extension.register_domain.models"]:
+        try:
+            mod = importlib.import_module(mod_name)
+            if hasattr(mod, f"G2PRegister{register_mnemonic}"):
+                return (
+                    register_definition,
+                    getattr(mod, f"G2PIntakeForm{register_mnemonic}"),
+                    getattr(mod, f"G2PRegister{register_mnemonic}"),
+                    getattr(mod, f"G2PRegisterHistory{register_mnemonic}"),
+                )
+        except Exception:
+            pass
+
+    module = importlib.import_module(_DOMAIN_MODELS_MODULE)
     return (
         register_definition,
         getattr(module, f"G2PIntakeForm{register_mnemonic}"),
@@ -323,20 +336,19 @@ def _convert_date_strings_to_objects(data_dict: dict, model_class) -> dict:
 
 
 def _get_domain_service_by_register_mnemonic(register_mnemonic: str):
-    try:
-        module = importlib.import_module(_DOMAIN_FACTORY_MODULE)
-        domain_factory_class = getattr(module, _DOMAIN_FACTORY_CLASS)
-        g2p_registry_domain_factory = domain_factory_class.get_component()
-        if not g2p_registry_domain_factory:
-            g2p_registry_domain_factory = domain_factory_class()
-        return g2p_registry_domain_factory.get_domain_service(register_mnemonic)
-    except Exception as error:
-        _logger.warning(
-            "Unable to resolve domain service for register mnemonic '%s': %s",
-            register_mnemonic,
-            error,
-        )
-        return None
+    for factory_mod in [_DOMAIN_FACTORY_MODULE, "openg2p_registry_nsr_extension.register_domain.factory"]:
+        try:
+            module = importlib.import_module(factory_mod)
+            domain_factory_class = getattr(module, _DOMAIN_FACTORY_CLASS)
+            g2p_registry_domain_factory = domain_factory_class.get_component()
+            if not g2p_registry_domain_factory:
+                g2p_registry_domain_factory = domain_factory_class()
+            svc = g2p_registry_domain_factory.get_domain_service(register_mnemonic)
+            if svc:
+                return svc
+        except Exception:
+            pass
+    return None
 
 
 async def _run_post_ingest_hook(register_definition, register_row, session):

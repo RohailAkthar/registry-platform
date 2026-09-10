@@ -15,10 +15,22 @@ def find_register_row_by_identifier(
     register_definition = session.get(G2PRegisterDefinition, register_id)
     if not register_definition:
         return None
-    model_module = importlib.import_module(_DOMAIN_MODELS_MODULE)
-    register_class = getattr(
-        model_module, f"G2PRegister{register_definition.register_mnemonic}"
-    )
+    register_mnemonic = register_definition.register_mnemonic
+    register_class = None
+    for mod_name in [_DOMAIN_MODELS_MODULE, "openg2p_registry_nsr_extension.register_domain.models"]:
+        try:
+            model_module = importlib.import_module(mod_name)
+            if hasattr(model_module, f"G2PRegister{register_mnemonic}"):
+                register_class = getattr(model_module, f"G2PRegister{register_mnemonic}")
+                break
+        except Exception:
+            pass
+
+    if not register_class:
+        model_module = importlib.import_module(_DOMAIN_MODELS_MODULE)
+        register_class = getattr(
+            model_module, f"G2PRegister{register_mnemonic}"
+        )
     row = session.execute(
         select(register_class).where(
             register_class.functional_record_id == record_identifier

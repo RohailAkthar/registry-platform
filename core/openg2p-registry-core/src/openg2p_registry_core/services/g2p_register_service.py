@@ -742,10 +742,21 @@ class G2PRegisterService(BaseService):
 
     async def _count_records_for_register(self, register_definition: G2PRegisterDefinition, session) -> int:
         try:
-            module = importlib.import_module("openg2p_registry_extensions.register_domain.models")
             register_class_prefix = "G2PRegister"
             implementation_class_name = f"{register_class_prefix}{register_definition.register_mnemonic}"
-            register_class = getattr(module, implementation_class_name)
+            register_class = None
+            for mod_name in ["openg2p_registry_nsr_extension.register_domain.models", "openg2p_registry_extensions.register_domain.models"]:
+                try:
+                    module = importlib.import_module(mod_name)
+                    if hasattr(module, implementation_class_name):
+                        register_class = getattr(module, implementation_class_name)
+                        break
+                except Exception:
+                    pass
+
+            if not register_class:
+                module = importlib.import_module("openg2p_registry_extensions.register_domain.models")
+                register_class = getattr(module, implementation_class_name)
 
             total_record_count: int = (
                 await session.execute(

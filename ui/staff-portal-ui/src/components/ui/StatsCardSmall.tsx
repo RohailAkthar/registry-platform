@@ -28,18 +28,27 @@ const StatsCardSmall = ({
                 if (name.includes('household')) return 1;
                 if (name.includes('individual')) return 2;
                 if (name.includes('farmer')) return 3;
+                if (name.includes('student')) return 4;
                 return 99;
             };
             const sorted = [...data].sort((a, b) => getRank(a) - getRank(b));
 
             return {
                 title: t('registers'),
-                rows: sorted.slice(0, 5).map((item) => ({
-                    id: item.register_id,
-                    label: t(item.register_subject),
-                    value: item.total_record_count,
-                    imageUrl: item.register_icon?.startsWith('data:') ? item.register_icon : undefined,
-                })),
+                rows: sorted.slice(0, 5).map((item) => {
+                    let label = item.register_subject || item.register_mnemonic;
+                    try {
+                        label = t(item.register_subject);
+                    } catch {
+                        label = item.register_subject || item.register_mnemonic;
+                    }
+                    return {
+                        id: item.register_id,
+                        label: label,
+                        value: item.total_record_count,
+                        imageUrl: item.register_icon?.startsWith('data:') ? item.register_icon : undefined,
+                    };
+                }),
             };
         }
 

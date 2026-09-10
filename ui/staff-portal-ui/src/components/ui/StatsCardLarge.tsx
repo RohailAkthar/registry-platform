@@ -26,12 +26,20 @@ const StatsCardLarge = ({
         if (Array.isArray(data)) {
             return {
                 title: t('registers'),
-                rows: data.slice(0, 4).map((item) => ({
-                    id: item.register_id,
-                    label: t(item.register_subject),
-                    value: item.total_record_count,
-                    imageUrl: item.register_icon?.startsWith('data:') ? item.register_icon : undefined,
-                })),
+                rows: data.slice(0, 5).map((item) => {
+                    let label = item.register_subject || item.register_mnemonic;
+                    try {
+                        label = t(item.register_subject);
+                    } catch {
+                        label = item.register_subject || item.register_mnemonic;
+                    }
+                    return {
+                        id: item.register_id,
+                        label: label,
+                        value: item.total_record_count,
+                        imageUrl: item.register_icon?.startsWith('data:') ? item.register_icon : undefined,
+                    };
+                }),
             };
         }
 

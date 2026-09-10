@@ -283,6 +283,101 @@ function buildSchemaDataFromExternal(data: any, registerType?: string) {
     }
 
     // -------------------------------------------------------------
+    // STUDENT INTAKE FORM (UDISE+ / Pure Student Registry)
+    // -------------------------------------------------------------
+    if (registerType?.toLowerCase() === 'student') {
+        const studentName = student?.student_name || individual?.name || '';
+        const nameParts = studentName.trim() ? studentName.trim().split(/\s+/) : [];
+        const firstName = nameParts[0] || '';
+        const middleName = nameParts.length > 2 ? nameParts.slice(1, -1).join(' ') : '';
+        const lastName = nameParts.length > 1 ? nameParts[nameParts.length - 1] : '';
+
+        let gender = '';
+        if (student?.gender || individual?.gender) {
+            const rawGender = String(student?.gender || individual?.gender).toUpperCase();
+            if (rawGender === 'F' || rawGender === 'FEMALE') gender = 'FEMALE';
+            else if (rawGender === 'M' || rawGender === 'MALE') gender = 'MALE';
+            else gender = rawGender;
+        }
+
+        const classGrade = student?.class_grade || '';
+        let eduLevel = '';
+        if (classGrade) {
+            if (classGrade.includes('1') || classGrade.includes('2') || classGrade.includes('3') || classGrade.includes('4') || classGrade.includes('5')) {
+                eduLevel = 'PRIMARY';
+            } else if (classGrade.includes('6') || classGrade.includes('7') || classGrade.includes('8')) {
+                eduLevel = 'MIDDLE';
+            } else if (classGrade.includes('9') || classGrade.includes('10')) {
+                eduLevel = 'SECONDARY';
+            } else if (classGrade.includes('11') || classGrade.includes('12')) {
+                eduLevel = 'HIGHER_SECONDARY';
+            }
+        }
+
+        const district = student?.district || '';
+        const block = student?.block || '';
+        const village = student?.village || '';
+        const bankAccountNo = student?.bank_account_no || '';
+        const ifscCode = student?.ifsc_code || '';
+        const bankName = student?.bank_name || (ifscCode && bankAccountNo ? getBankName(ifscCode, bankAccountNo) : '');
+
+        schema['a0000000-0000-4000-8000-000000000004'] = {
+            foundational_id: student?.student_aadhaar_number || data.aadhaar || searched_aadhaar || '',
+            first_name: firstName,
+            middle_name: middleName,
+            last_name: lastName,
+            gender: gender,
+            birth_date: student?.dob || '',
+            guardian_aadhaar_number: student?.guardian_aadhaar_number || '',
+            father_name: student?.father_name || '',
+            mother_name: student?.mother_name || '',
+            guardian_name: student?.guardian_name || '',
+            social_category: student?.social_category || '',
+            mobile_phone_number: student?.mobile_phone_number || '',
+            email: student?.email || '',
+            village: village,
+            block: block,
+            district: district,
+            state: student?.state || (district ? 'Bihar' : ''),
+            postal_code: student?.postal_code || '',
+            address_line_1: student?.address_line_1 || (village && block ? `${village}, ${block}` : (village || block || '')),
+
+            // Educational Profile & UDISE+
+            udise_student_id: student?.udise_student_id || '',
+            student_id: student?.student_id || student?.udise_student_id || '',
+            apaar_id: student?.apaar_id || '',
+            pen_number: student?.pen_number || '',
+            school_name: student?.school_name || '',
+            school_udise_code: student?.school_udise_code || '',
+            education_level: eduLevel,
+            class_grade: classGrade,
+            stream: student?.stream || '',
+            roll_number: student?.roll_number || '',
+            enrollment_date: student?.enrollment_date || '',
+            attendance_percentage: (student?.attendance_percentage !== undefined && student?.attendance_percentage !== null && student?.attendance_percentage !== '') ? Number(student.attendance_percentage) : '',
+            medium_of_instruction: student?.medium_of_instruction || '',
+
+            // Entitlements & Banking
+            scholarship_status: student?.scholarship_status || '',
+            bank_account_no: bankAccountNo,
+            bank_name: bankName,
+            ifsc_code: ifscCode,
+        };
+
+        // Academic Records Child Table (b0000000-0000-4000-8000-000000000060)
+        schema['b0000000-0000-4000-8000-000000000060'] = {
+            records: Array.isArray(student?.academic_records) ? student.academic_records : [],
+        };
+
+        // Scholarships & Entitlements Child Table (b0000000-0000-4000-8000-000000000061)
+        schema['b0000000-0000-4000-8000-000000000061'] = {
+            records: Array.isArray(student?.scholarship_records) ? student.scholarship_records : [],
+        };
+
+        return schema;
+    }
+
+    // -------------------------------------------------------------
     // HOUSEHOLD INTAKE FORM (Anchor + Enrich Architecture)
     // -------------------------------------------------------------
     // Compute demographic breakdown from family roster

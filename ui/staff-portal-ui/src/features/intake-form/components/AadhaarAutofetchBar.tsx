@@ -25,19 +25,28 @@ export default function AadhaarAutofetchBar({
     const [statusStage, setStatusStage] = useState<string>('');
 
     const isFarmer = registerType === 'farmer';
+    const isStudent = registerType === 'student';
 
     const handleSearch = async (aadhaarToSearch?: string) => {
         const target = (aadhaarToSearch || aadhaarInput).trim();
         if (!target) {
-            toast.warn('Please enter an Aadhaar number to search');
+            toast.warn('Please enter an Aadhaar or Student ID to search');
             return;
         }
 
         setLoading(true);
-            setStatusStage(isFarmer ? 'Searching Farmer & Land Registries...' : 'Searching PDS Registry & Resolving Family Roster...');
+        setStatusStage(
+            isFarmer
+                ? 'Searching Farmer & Land Registries...'
+                : isStudent
+                ? 'Searching UDISE+ Student Registry...'
+                : 'Searching PDS Registry & Resolving Family Roster...'
+        );
         try {
             const url = isFarmer
                 ? `/api/external-fetch?aadhaar=${encodeURIComponent(target)}&registerType=farmer`
+                : isStudent
+                ? `/api/external-fetch?aadhaar=${encodeURIComponent(target)}&registerType=student`
                 : `/api/external-fetch?aadhaar=${encodeURIComponent(target)}`;
             const res = await fetch(url);
             if (!res.ok) {
@@ -45,10 +54,16 @@ export default function AadhaarAutofetchBar({
             }
             const data = await res.json();
             if (data.status === 'not_found' || !data.sources_found || data.sources_found.length === 0) {
-                toast.error(`No records found in PDS for: ${target}`);
+                toast.error(
+                    isStudent
+                        ? `No student record found in UDISE+ for: ${target}`
+                        : `No records found in registry for: ${target}`
+                );
             } else {
                 if (isFarmer) {
                     toast.success(`✨ Found Farmer profile & land records from AgriStack & BiharBhumi!`);
+                } else if (isStudent) {
+                    toast.success(`✨ Found Student profile & academic details from UDISE+!`);
                 } else {
                     toast.success(
                         `✨ Household resolved from PDS! (${data.family_members?.length || 1} family members loaded)`
@@ -77,6 +92,10 @@ export default function AadhaarAutofetchBar({
               { id: 'FarmerAgriStack', label: 'Farmer AgriStack', icon: '🚜', role: 'PRIMARY' },
               { id: 'BiharBhumi', label: 'BiharBhumi (Land Records)', icon: '🌾', role: 'ENRICH' },
           ]
+        : isStudent
+        ? [
+              { id: 'Student', label: 'UDISE+ Student Registry', icon: '🎓', role: 'PRIMARY' },
+          ]
         : [
               { id: 'PDS', label: 'PDS Food Security (Ration Card)', icon: '🍚', role: 'PRIMARY' },
           ];
@@ -91,23 +110,27 @@ export default function AadhaarAutofetchBar({
             <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
                 <div className="flex items-center gap-3.5">
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 text-slate-950 font-black text-xl shadow-lg shadow-amber-500/30">
-                        {isFarmer ? '🚜' : '🍚'}
+                        {isFarmer ? '🚜' : isStudent ? '🎓' : '🍚'}
                     </div>
                     <div>
                         <div className="flex items-center gap-2.5">
                             <h2 className="text-xl font-extrabold tracking-tight text-white">
                                 {isFarmer
                                     ? 'Farmer Registry Autofetch (AgriStack + BiharBhumi)'
+                                    : isStudent
+                                    ? 'Student Registry Autofetch (UDISE+ Student)'
                                     : 'Household Registry Formation (PDS / Ration Card)'}
                             </h2>
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 shadow-sm">
                                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
-                                {isFarmer ? '2 Agri APIs Live' : 'PDS API Live'}
+                                {isFarmer ? '2 Agri APIs Live' : isStudent ? 'UDISE+ API Live' : 'PDS API Live'}
                             </span>
                         </div>
                         <p className="text-xs text-blue-200/80 mt-0.5">
                             {isFarmer
                                 ? 'Direct lookup in AgriStack Farmer Registry ➔ Enrich land parcels & cadastral records from BiharBhumi'
+                                : isStudent
+                                ? 'Lookup by Student Aadhaar or UDISE Student ID ➔ Auto-populates Student Demographics, School & Scholarships'
                                 : 'Lookup by Aadhaar or Ration Card Number ➔ Auto-populates Head Demographics, Full Family Roster & Food Entitlements'}
                         </p>
                     </div>
@@ -128,6 +151,8 @@ export default function AadhaarAutofetchBar({
                         placeholder={
                             isFarmer
                                 ? 'Enter 12-digit Farmer Aadhaar Number...'
+                                : isStudent
+                                ? 'Enter 12-digit Student Aadhaar or UDISE Student ID (e.g. BR9599548612504)...'
                                 : 'Enter 12-digit Aadhaar Number or Ration Card Number (e.g. 10-559-690-397262)...'
                         }
                         className="w-full bg-white/95 hover:bg-white text-slate-900 placeholder-slate-400 pl-11 pr-10 py-3.5 rounded-xl font-mono text-base font-semibold tracking-wider border-0 focus:ring-2 focus:ring-amber-400 shadow-inner transition-all"
@@ -166,7 +191,7 @@ export default function AadhaarAutofetchBar({
                         ) : (
                             <>
                                 <span className="text-base">🔍</span>
-                                <span>{isFarmer ? 'Fetch Farmer Details' : 'Form Household Registry'}</span>
+                                <span>{isFarmer ? 'Fetch Farmer Details' : isStudent ? 'Fetch Student Details' : 'Form Household Registry'}</span>
                             </>
                         )}
                     </button>

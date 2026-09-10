@@ -378,6 +378,67 @@ export async function searchAllRegistriesByAadhaar(
     }
 
     // -----------------------------------------------------------------------
+    // STUDENT REGISTRY SEARCH: Only query Student Mock Registry
+    // Search strictly by student_aadhaar_number or udise_student_id
+    // -----------------------------------------------------------------------
+    if (registerType === 'student') {
+        let studentRecords = await searchRegistry("Student", { student_aadhaar_number: { eq: cleanAadhaar } });
+        if (!studentRecords || studentRecords.length === 0) {
+            studentRecords = await searchRegistry("Student", { udise_student_id: { eq: cleanAadhaar } });
+        }
+
+        const resultsMap: Record<RegistryEntity, any[]> = {
+            PDS: [],
+            SHGLokOS: [],
+            FarmerAgriStack: [],
+            Student: studentRecords,
+            Pension: [],
+            BiharBhumi: [],
+        };
+
+        const sourcesFound: string[] = [];
+        if (studentRecords.length > 0) sourcesFound.push("Student");
+
+        const s = studentRecords[0] || {};
+        const studentName = s.student_name || "";
+
+        return {
+            status: sourcesFound.length > 0 ? "found" : "not_found",
+            anchor_registry: "Student",
+            searched_aadhaar: cleanAadhaar,
+            aadhaar: s.student_aadhaar_number || cleanAadhaar,
+            household_id: "",
+            sources_found: sourcesFound,
+            registries: resultsMap,
+            individual: {
+                name: studentName,
+                mobile: s.mobile_phone_number || "",
+                gender: s.gender === 'F' ? "FEMALE" : (s.gender === 'M' ? "MALE" : (s.gender || "")),
+                dob: s.dob || "",
+                district: s.district || "",
+                block: s.block || "",
+                village: s.village || "",
+                bank_account_no: s.bank_account_no || "",
+                ifsc: s.ifsc_code || "",
+                bank_name: s.bank_name || "",
+                role: "Enrolled Student",
+            },
+            summary: {
+                head_name: studentName,
+                phone: s.mobile_phone_number || "",
+                district: s.district || "",
+                block: s.block || "",
+                village: s.village || "",
+                family_size: 1,
+                bank_account_no: s.bank_account_no || "",
+                ifsc: s.ifsc_code || "",
+                bank_name: s.bank_name || "",
+            },
+            family_members: [],
+        };
+    }
+
+    // -----------------------------------------------------------------------
     // PDS-FOCUSED HOUSEHOLD RESOLUTION & FAMILY ROSTER EXPANSION
     // -----------------------------------------------------------------------
     // 1. Search PDS by Aadhaar number

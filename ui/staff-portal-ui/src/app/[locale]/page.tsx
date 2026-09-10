@@ -76,14 +76,23 @@ export default function Home() {
             if (name.includes('household')) return 1;
             if (name.includes('individual')) return 2;
             if (name.includes('farmer')) return 3;
+            if (name.includes('student')) return 4;
             return 99;
         };
         return [...registers]
             .sort((a, b) => getRank(a) - getRank(b))
-            .map(r => ({
-                value: r.register_mnemonic.toLowerCase(),
-                label: t(r.register_subject),
-            }));
+            .map(r => {
+                let label = r.register_subject || r.register_mnemonic;
+                try {
+                    label = t(r.register_subject);
+                } catch {
+                    label = r.register_subject || r.register_mnemonic;
+                }
+                return {
+                    value: r.register_mnemonic.toLowerCase(),
+                    label: label,
+                };
+            });
     }, [registers, t]);
 
     const taskArtifactOptions = TASK_ARTIFACT_FILTER_OPTIONS.map((opt) => ({
