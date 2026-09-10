@@ -314,7 +314,21 @@ function buildSchemaDataFromExternal(data: any, registerType?: string) {
 
     const totalCalculatedSize = family_members?.length || pds?.family_member_count || 4;
 
-    // 1. Household Headship & Demographics & Location (a0000000-0000-4000-8000-000000000002)
+    // Normalize Ration Card Type & e-KYC to match OpenG2P select options
+    const rawRcType = (pds?.ration_card_type || summary?.ration_card_type || 'PHH').toUpperCase().trim();
+    let normalizedRcType = 'PHH';
+    if (rawRcType.includes('AAY') || rawRcType.includes('ANTYODAYA')) normalizedRcType = 'AAY';
+    else if (rawRcType.includes('STATE')) normalizedRcType = 'STATE';
+    else if (rawRcType.includes('NON')) normalizedRcType = 'NON_NFSA';
+    else normalizedRcType = 'PHH';
+
+    const rawEkyc = (pds?.e_kyc_status || 'VERIFIED').toUpperCase().trim();
+    let normalizedEkyc = 'VERIFIED';
+    if (rawEkyc.includes('FAIL')) normalizedEkyc = 'FAILED';
+    else if (rawEkyc.includes('PEND')) normalizedEkyc = 'PENDING';
+    else normalizedEkyc = 'VERIFIED';
+
+    // 1. Household Headship & Demographics, Location & PDS (a0000000-0000-4000-8000-000000000002)
     schema['a0000000-0000-4000-8000-000000000002'] = {
         household_head_person_id: data.aadhaar || searched_aadhaar,
         household_head_name: summary?.head_name || pds?.head_of_household_name || '',
@@ -337,6 +351,14 @@ function buildSchemaDataFromExternal(data: any, registerType?: string) {
         address_line_1: `${summary?.block || pds?.block || 'Rajgir'}, ${summary?.district || pds?.district || 'Nalanda'}, Bihar`,
         address_descriptor: `Ration Card #${pds?.ration_card_number || summary?.ration_card_number || ''}, ${pds?.dealer_name || summary?.dealer_name || 'FPS Store'} (${pds?.fps_shop_code || summary?.fps_shop_code || ''}), ${summary?.block || pds?.block || 'Rajgir'}, ${summary?.district || pds?.district || 'Nalanda'}`,
         record_name: summary?.head_name ? `Household of ${summary.head_name}` : 'Household',
+
+        // PDS Food Security (Ration Card Details)
+        ration_card_number: pds?.ration_card_number || summary?.ration_card_number || '',
+        ration_card_type: normalizedRcType,
+        fps_shop_code: pds?.fps_shop_code || summary?.fps_shop_code || 'FPS-6425',
+        dealer_name: pds?.dealer_name || summary?.dealer_name || 'Fair Price Shop',
+        monthly_entitlement_kg: Number(pds?.monthly_entitlement_kg || summary?.monthly_entitlement_kg) || 25,
+        e_kyc_status: normalizedEkyc,
     };
 
     // Helper to normalize relationship to OpenG2P RelationshipToHeadEnum
