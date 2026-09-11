@@ -77,6 +77,7 @@ export default function Home() {
             if (name.includes('individual')) return 2;
             if (name.includes('farmer')) return 3;
             if (name.includes('student')) return 4;
+            if (name.includes('group')) return 5;
             return 99;
         };
         return [...registers]

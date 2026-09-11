@@ -26,11 +26,12 @@ export default function AadhaarAutofetchBar({
 
     const isFarmer = registerType === 'farmer';
     const isStudent = registerType === 'student';
+    const isGroup = registerType === 'group';
 
     const handleSearch = async (aadhaarToSearch?: string) => {
         const target = (aadhaarToSearch || aadhaarInput).trim();
         if (!target) {
-            toast.warn('Please enter an Aadhaar or Student ID to search');
+            toast.warn('Please enter an Aadhaar or LokOS ID to search');
             return;
         }
 
@@ -40,6 +41,8 @@ export default function AadhaarAutofetchBar({
                 ? 'Searching Farmer & Land Registries...'
                 : isStudent
                 ? 'Searching UDISE+ Student Registry...'
+                : isGroup
+                ? 'Searching JEEViKA LokOS SHG Registry...'
                 : 'Searching PDS Registry & Resolving Family Roster...'
         );
         try {
@@ -47,6 +50,8 @@ export default function AadhaarAutofetchBar({
                 ? `/api/external-fetch?aadhaar=${encodeURIComponent(target)}&registerType=farmer`
                 : isStudent
                 ? `/api/external-fetch?aadhaar=${encodeURIComponent(target)}&registerType=student`
+                : isGroup
+                ? `/api/external-fetch?aadhaar=${encodeURIComponent(target)}&registerType=group`
                 : `/api/external-fetch?aadhaar=${encodeURIComponent(target)}`;
             const res = await fetch(url);
             if (!res.ok) {
@@ -57,6 +62,8 @@ export default function AadhaarAutofetchBar({
                 toast.error(
                     isStudent
                         ? `No student record found in UDISE+ for: ${target}`
+                        : isGroup
+                        ? `No record found in JEEViKA LokOS for: ${target}`
                         : `No records found in registry for: ${target}`
                 );
             } else {
@@ -64,6 +71,8 @@ export default function AadhaarAutofetchBar({
                     toast.success(`✨ Found Farmer profile & land records from AgriStack & BiharBhumi!`);
                 } else if (isStudent) {
                     toast.success(`✨ Found Student profile & academic details from UDISE+!`);
+                } else if (isGroup) {
+                    toast.success(`✨ Found SHG Group & LokOS member records!`);
                 } else {
                     toast.success(
                         `✨ Household resolved from PDS! (${data.family_members?.length || 1} family members loaded)`
@@ -96,6 +105,10 @@ export default function AadhaarAutofetchBar({
         ? [
               { id: 'Student', label: 'UDISE+ Student Registry', icon: '🎓', role: 'PRIMARY' },
           ]
+        : isGroup
+        ? [
+              { id: 'SHGLokOS', label: 'JEEViKA LokOS (SHG Registry)', icon: '👥', role: 'PRIMARY' },
+          ]
         : [
               { id: 'PDS', label: 'PDS Food Security (Ration Card)', icon: '🍚', role: 'PRIMARY' },
           ];
@@ -110,7 +123,7 @@ export default function AadhaarAutofetchBar({
             <div className="relative z-10 flex flex-col sm:flex-row sm:items-center justify-between gap-4 pb-4 border-b border-white/10">
                 <div className="flex items-center gap-3.5">
                     <div className="flex h-11 w-11 items-center justify-center rounded-xl bg-gradient-to-br from-amber-400 to-amber-500 text-slate-950 font-black text-xl shadow-lg shadow-amber-500/30">
-                        {isFarmer ? '🚜' : isStudent ? '🎓' : '🍚'}
+                        {isFarmer ? '🚜' : isStudent ? '🎓' : isGroup ? '👥' : '🍚'}
                     </div>
                     <div>
                         <div className="flex items-center gap-2.5">
@@ -119,11 +132,13 @@ export default function AadhaarAutofetchBar({
                                     ? 'Farmer Registry Autofetch (AgriStack + BiharBhumi)'
                                     : isStudent
                                     ? 'Student Registry Autofetch (UDISE+ Student)'
+                                    : isGroup
+                                    ? 'Group Registry Autofetch (JEEViKA LokOS)'
                                     : 'Household Registry Formation (PDS / Ration Card)'}
                             </h2>
                             <span className="inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-bold bg-emerald-400/20 text-emerald-300 border border-emerald-400/30 shadow-sm">
                                 <span className="h-1.5 w-1.5 rounded-full bg-emerald-400 animate-ping" />
-                                {isFarmer ? '2 Agri APIs Live' : isStudent ? 'UDISE+ API Live' : 'PDS API Live'}
+                                {isFarmer ? '2 Agri APIs Live' : isStudent ? 'UDISE+ API Live' : isGroup ? 'LokOS API Live' : 'PDS API Live'}
                             </span>
                         </div>
                         <p className="text-xs text-blue-200/80 mt-0.5">
@@ -131,6 +146,8 @@ export default function AadhaarAutofetchBar({
                                 ? 'Direct lookup in AgriStack Farmer Registry ➔ Enrich land parcels & cadastral records from BiharBhumi'
                                 : isStudent
                                 ? 'Lookup by Student Aadhaar or UDISE Student ID ➔ Auto-populates Student Demographics, School & Scholarships'
+                                : isGroup
+                                ? 'Lookup by Member Aadhaar or LokOS SHG Code ➔ Auto-populates SHG Profile, Federation Details & Banking'
                                 : 'Lookup by Aadhaar or Ration Card Number ➔ Auto-populates Head Demographics, Full Family Roster & Food Entitlements'}
                         </p>
                     </div>
@@ -153,10 +170,12 @@ export default function AadhaarAutofetchBar({
                                 ? 'Enter 12-digit Farmer Aadhaar Number...'
                                 : isStudent
                                 ? 'Enter 12-digit Student Aadhaar or UDISE Student ID (e.g. BR9599548612504)...'
+                                : isGroup
+                                ? 'Enter 12-digit Member Aadhaar or LokOS SHG Code (e.g. SHG-BR-0001)...'
                                 : 'Enter 12-digit Aadhaar Number or Ration Card Number (e.g. 10-559-690-397262)...'
                         }
                         className="w-full bg-white/95 hover:bg-white text-slate-900 placeholder-slate-400 pl-11 pr-10 py-3.5 rounded-xl font-mono text-base font-semibold tracking-wider border-0 focus:ring-2 focus:ring-amber-400 shadow-inner transition-all"
-                        maxLength={isFarmer ? 12 : 20}
+                        maxLength={isFarmer ? 12 : 25}
                     />
                     {aadhaarInput && (
                         <button

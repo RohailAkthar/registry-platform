@@ -10,6 +10,67 @@ interface RegisterRecordCardProps {
     isEven: boolean;
 }
 
+const FIELD_LABEL_MAP: Record<string, string> = {
+    foundational_id: 'Aadhaar ID',
+    farmer_id: 'Farmer ID',
+    farmer_name: 'Farmer Name',
+    village: 'Village',
+    block: 'Block',
+    district: 'District',
+    crop_type: 'Crops',
+    land_area_acres: 'Land Area (Acres)',
+    udise_student_id: 'UDISE Student ID',
+    student_name: 'Student Name',
+    school_name: 'School Name',
+    class_grade: 'Class / Grade',
+    scholarship_status: 'Scholarship',
+    group_name: 'Group Name',
+    shg_id: 'LokOS SHG ID',
+    shg_code: 'SHG Code',
+    lokos_id: 'LokOS ID',
+    member_id: 'Member ID',
+    key_member_name: 'Representative',
+    key_member_aadhaar: 'Rep. Aadhaar',
+    shg_grading: 'SHG Grading',
+    monthly_savings_amount: 'Monthly Savings',
+    household_head_name: 'Head of Household',
+    household_head_person_id: 'Head Aadhaar ID',
+    headship_type: 'Headship',
+    size_total: 'Members',
+    dwelling_type: 'Dwelling Type',
+    tenure_status: 'Tenure',
+    zone_subcity_code: 'District',
+    woreda_code: 'Block',
+    kebele_code: 'Village',
+    internal_loan_outstanding: 'Internal Loan',
+    ccl_limit: 'CCL Limit',
+    ccl_utilised: 'CCL Utilised',
+};
+
+function formatFieldLabel(fieldName: string, t: any): string {
+    if (fieldName === 'foundational_id') return 'Aadhaar ID';
+    if (FIELD_LABEL_MAP[fieldName]) return FIELD_LABEL_MAP[fieldName];
+    if (t.has(fieldName)) {
+        const translated = t(fieldName);
+        if (translated && !translated.toLowerCase().includes('fayda')) {
+            return translated;
+        }
+    }
+    return fieldName
+        .split('_')
+        .map((word) => word.charAt(0).toUpperCase() + word.slice(1))
+        .join(' ');
+}
+
+function formatFieldValue(field: any, record: RegisterRecord, t: any): string {
+    let val = field?.value;
+    if (!val && (field?.field_name === 'farmer_name' || field?.field_name === 'student_name' || field?.field_name === 'group_name')) {
+        val = record.record_name ? record.record_name.split(' (')[0] : '';
+    }
+    if (!val) return '—';
+    return t.has(val) ? t(val) : val;
+}
+
 export function RegisterRecordCard({ record, registerType, isEven }: RegisterRecordCardProps) {
     const t = useTranslations();
     const sortedFields = sortedDisplayFields(record.display_fields);
@@ -55,10 +116,10 @@ export function RegisterRecordCard({ record, registerType, isEven }: RegisterRec
                             {firstField ? (
                                 <p className="text-[16px] text-neutral-first truncate">
                                     <span className="font-normal text-neutral-first/70">
-                                        {t.has(firstField.field_name) ? t(firstField.field_name) : firstField.field_name}:{' '}
+                                        {formatFieldLabel(firstField.field_name, t)}:{' '}
                                     </span>
                                     <span className="font-medium">
-                                        {firstField.value ? (t.has(firstField.value) ? t(firstField.value) : firstField.value) : ''}
+                                        {formatFieldValue(firstField, record, t)}
                                     </span>
                                 </p>
                             ) : (
@@ -67,10 +128,10 @@ export function RegisterRecordCard({ record, registerType, isEven }: RegisterRec
                             {secondField ? (
                                 <p className="text-[16px] text-neutral-first truncate">
                                     <span className="font-normal text-neutral-first/70">
-                                        {t.has(secondField.field_name) ? t(secondField.field_name) : secondField.field_name}:{' '}
+                                        {formatFieldLabel(secondField.field_name, t)}:{' '}
                                     </span>
                                     <span className="font-medium">
-                                        {secondField.value ? (t.has(secondField.value) ? t(secondField.value) : secondField.value) : ''}
+                                        {formatFieldValue(secondField, record, t)}
                                     </span>
                                 </p>
                             ) : (

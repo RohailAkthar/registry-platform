@@ -29,13 +29,14 @@ const StatsCardSmall = ({
                 if (name.includes('individual')) return 2;
                 if (name.includes('farmer')) return 3;
                 if (name.includes('student')) return 4;
+                if (name.includes('group')) return 5;
                 return 99;
             };
             const sorted = [...data].sort((a, b) => getRank(a) - getRank(b));
 
             return {
                 title: t('registers'),
-                rows: sorted.slice(0, 5).map((item) => {
+                rows: sorted.slice(0, 6).map((item) => {
                     let label = item.register_subject || item.register_mnemonic;
                     try {
                         label = t(item.register_subject);
@@ -99,7 +100,7 @@ const StatsCardSmall = ({
                     {
                         id: "incomingMessages",
                         label: t('incoming_messages'),
-                        value: data.no_of_messages|| "0",
+                        value: data.no_of_messages || "0",
                         imageUrl: "/images/messages/message_icon.png",
                     },
                     {

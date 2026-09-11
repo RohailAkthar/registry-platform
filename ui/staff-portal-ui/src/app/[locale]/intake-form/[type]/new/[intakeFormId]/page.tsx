@@ -378,6 +378,64 @@ function buildSchemaDataFromExternal(data: any, registerType?: string) {
     }
 
     // -------------------------------------------------------------
+    // GROUP INTAKE FORM (JEEViKA LokOS / SHG Registry)
+    // -------------------------------------------------------------
+    if (registerType?.toLowerCase() === 'group') {
+        const shg = getFirst(registries?.SHGLokOS) || individual || {};
+        const groupName = shg?.shg_name || summary?.head_name || 'Self Help Group';
+        const bankAccountNo = shg?.bank_account_no || shg?.shg_bank_account_no || summary?.bank_account_no || '';
+        const ifscCode = shg?.ifsc || shg?.shg_ifsc || summary?.ifsc || 'SBIN0007629';
+        const bankName = getBankName(ifscCode, bankAccountNo);
+        const district = shg?.district || summary?.district || 'Nalanda';
+        const block = shg?.block || summary?.block || 'Hilsa';
+        const gp = shg?.gp || `${summary?.village || 'Bishunpur'} GP`;
+        const village = shg?.village || summary?.village || 'Bishunpur';
+
+        schema['a0000000-0000-4000-8000-000000000005'] = {
+            // Group Profile & Identification
+            group_name: groupName,
+            group_type: 'SHG',
+            shg_id: shg?.shg_id || '',
+            shg_code: shg?.shg_id || '',
+            lokos_id: shg?.lokos_id || '',
+            formation_date: shg?.shg_join_date || '2019-04-12',
+            meeting_frequency: 'Weekly',
+            shg_grading: shg?.shg_grading || 'A',
+
+            // Community Federation (VO & CLF)
+            vo_id: shg?.vo_id || '',
+            vo_name: shg?.vo_name || '',
+            clf_id: shg?.clf_id || '',
+            clf_name: shg?.clf_name || '',
+
+            // Key Representative / Leader
+            member_id: shg?.member_id || '',
+            key_member_name: shg?.member_name || 'Upma Ranganathan',
+            key_member_aadhaar: shg?.aadhaar_number || data.aadhaar || searched_aadhaar || '',
+            key_member_role: shg?.shg_role || 'President',
+            key_member_mobile: shg?.mobile_number || summary?.phone || '',
+
+            // Banking & Financial Limits
+            bank_name: bankName,
+            bank_account_no: bankAccountNo,
+            ifsc_code: ifscCode,
+            monthly_savings_amount: Number(shg?.monthly_savings_amount) || 100,
+            internal_loan_outstanding: Number(shg?.internal_loan_outstanding) || 0,
+            ccl_limit: Number(shg?.ccl_limit) || 200000,
+            ccl_utilised: Number(shg?.ccl_utilised) || 50000,
+
+            // Geographic Location
+            district: district,
+            block: block,
+            gram_panchayat: gp,
+            village: village,
+            pin_code: '804452',
+        };
+
+        return schema;
+    }
+
+    // -------------------------------------------------------------
     // HOUSEHOLD INTAKE FORM (Anchor + Enrich Architecture)
     // -------------------------------------------------------------
     // Compute demographic breakdown from family roster

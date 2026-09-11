@@ -439,6 +439,74 @@ export async function searchAllRegistriesByAadhaar(
     }
 
     // -----------------------------------------------------------------------
+    // GROUP / SHG REGISTRY SEARCH: Only query SHGLokOS
+    // Search strictly by aadhaar_number or shg_id or member_id
+    // -----------------------------------------------------------------------
+    if (registerType === 'group') {
+        let shgRecords = await searchRegistry("SHGLokOS", { aadhaar_number: { eq: cleanAadhaar } });
+        if (!shgRecords || shgRecords.length === 0) {
+            shgRecords = await searchRegistry("SHGLokOS", { lokos_id: { eq: cleanAadhaar } });
+        }
+        if (!shgRecords || shgRecords.length === 0) {
+            shgRecords = await searchRegistry("SHGLokOS", { shg_id: { eq: cleanAadhaar } });
+        }
+        if (!shgRecords || shgRecords.length === 0) {
+            shgRecords = await searchRegistry("SHGLokOS", { member_id: { eq: cleanAadhaar } });
+        }
+
+        const resultsMap: Record<RegistryEntity, any[]> = {
+            PDS: [],
+            SHGLokOS: shgRecords,
+            FarmerAgriStack: [],
+            Student: [],
+            Pension: [],
+            BiharBhumi: [],
+        };
+
+        const sourcesFound: string[] = [];
+        if (shgRecords.length > 0) sourcesFound.push("SHGLokOS");
+
+        const shg = shgRecords[0] || {};
+        const groupName = shg.shg_name || "";
+
+        return {
+            status: sourcesFound.length > 0 ? "found" : "not_found",
+            anchor_registry: "SHGLokOS",
+            searched_aadhaar: cleanAadhaar,
+            aadhaar: shg.aadhaar_number || cleanAadhaar,
+            household_id: shg.household_id || "",
+            sources_found: sourcesFound,
+            registries: resultsMap,
+            individual: {
+                name: shg.member_name || "",
+                mobile: shg.mobile_number || "",
+                gender: shg.gender === 'F' ? "FEMALE" : (shg.gender === 'M' ? "MALE" : (shg.gender || "FEMALE")),
+                dob: shg.dob || "",
+                district: shg.district || "",
+                block: shg.block || "",
+                village: shg.village || "",
+                bank_account_no: shg.bank_account_no || "",
+                ifsc: shg.ifsc || "",
+                bank_name: getBankNameFromIfsc(shg.ifsc, shg.bank_account_no),
+                role: shg.shg_role || "SHG Member",
+            },
+            summary: {
+                head_name: groupName || shg.member_name || "",
+                phone: shg.mobile_number || "",
+                district: shg.district || "",
+                block: shg.block || "",
+                village: shg.village || "",
+                gp: shg.gp || "",
+                family_size: 1,
+                bank_account_no: shg.bank_account_no || "",
+                ifsc: shg.ifsc || "",
+                bank_name: getBankNameFromIfsc(shg.ifsc, shg.bank_account_no),
+            },
+            family_members: [],
+        };
+    }
+
+    // -----------------------------------------------------------------------
     // PDS-FOCUSED HOUSEHOLD RESOLUTION & FAMILY ROSTER EXPANSION
     // -----------------------------------------------------------------------
     // 1. Search PDS by Aadhaar number
